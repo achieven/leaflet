@@ -16,9 +16,9 @@
     <script src="node_modules/jquery/dist/jquery.min.js"></script>
     <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
-    <script src="node_modules/leaflet/leaflet.js"></script>
-    <link rel="stylesheet" href="node_modules/leaflet/leaflet.css">
-    <link rel="stylesheet" href="assets/app.css">
+    <script src="node_modules/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="node_modules/leaflet/dist/leaflet.css">
+    <link rel="stylesheet" href="assets/assets.css">
 
     <!-- 2. Configure SystemJS -->
     <script>
@@ -46,7 +46,21 @@
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
-                <div id="mapid"></div>
+                <nav class="navbar navbar-inverse bg-faded">
+                    <a class="navbar-brand" href="#"></a>
+                    <ul class="nav navbar-nav">
+                    </ul>
+                </nav>
+                <div class="row">
+                    <div class="col-xs-3">
+                        <ul class="landmarks"></ul>
+                    </div>
+                    <div class="col-xs-9">
+                        <div id="mapid"></div>
+                    </div>
+                </div>
+
+
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
