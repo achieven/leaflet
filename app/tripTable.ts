@@ -7,10 +7,10 @@ import L from '../node_modules/leaflet/dist/leaflet.js'
 })
 export class AppComponent {
     constructor() {
-        var tripId = 0
     }
 
     renderTripsFromLocalStorage() {
+        
         var tripsAsArray = JSON.parse(window.localStorage.getItem('trips'))
         var tripsInTable = ''
         tripsAsArray.forEach(function (trip) {
@@ -30,6 +30,7 @@ export class AppComponent {
     }
 
     ngAfterContentInit() {
+        window.localStorage.setItem('trips', JSON.stringify([]))
         this.renderTripsFromLocalStorage()
 
     }
@@ -43,56 +44,65 @@ export class AppComponent {
 
             }
         })
-        $('.newTripBtn').unbind('click').on('click', function (e) {
-            if ($('#mapid').prop('outerHTML') === '<div id="mapid"></div>') {
-                var initialLatLng = [51.505, -0.09]
-                var mymap = L.map('mapid').setView(initialLatLng, 13);
-                mymap.panTo(initialLatLng)
-                var newMarkers = []
-                var newMarkerId = 0
-                var allTrips = JSON.parse(window.localStorage.getItem('trips'))
-                var newTripId = ++(allTrips[allTrips.length - 1].id)
 
+
+
+        $('.newTripBtn').unbind('click').on('click', function (e) {
+            function destroyMap(){
+                thisView.mymap.remove()
+                $('#mapid').empty()
+                $('.landmarks').empty()
+            }
+            function initializeMap() {
+                var initialLatLng = [51.505, -0.09]
+                thisView.mymap = L.map('mapid').setView(initialLatLng, 13);
                 L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpandmbXliNDBjZWd2M2x6bDk3c2ZtOTkifQ._QA7i5Mpkd_m30IGElHziw', {
                     maxZoom: 18,
                     attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
                     '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
                     'Imagery © <a href="http://mapbox.com">Mapbox</a>',
                     id: 'mapbox.streets'
-                }).addTo(mymap);
-                mymap.on('click', function (e) {
-                    var intervalId = setInterval(function(){
-                        
-                        if(e.lating){
-                            var newMarker = new L.marker(e.lating).addTo(mymap);
-                            newMarkers.push(e.lating)
-
-                            var landmarkId = ++newMarkerId
-                            var tripLandmarkId = newTripId + '_' + landmarkId
-                            $('.landmarks').append('<li> <button class="btn btn-success" id=' + tripLandmarkId + '>' + landmarkId + '</button></li>')
-                            var landmarkBtnSelector = '#' + tripLandmarkId
-                            $(landmarkBtnSelector).on('click', function (e) {
-                                //mymap.panTo(coordinates)
-                            })
-                            clearInterval(intervalId)
-                        }
-                        else {
-                            console.log('intervaling')
-                        }
-                    },1000)
-
-                })
+                }).addTo(thisView.mymap);
+                thisView.mymap.panTo(initialLatLng)
             }
+            if(thisView.mymap){
+                destroyMap()
+            }
+            initializeMap();
 
+            var newMarkers = []
+            var newMarkerId = 0
+            var allTrips = JSON.parse(window.localStorage.getItem('trips'))
+            var newTripId = allTrips.length > 0 ? ++(allTrips[allTrips.length - 1].id) : 1
+
+
+            thisView.mymap.on('click', function (e) {
+                var landmarkLatLng = e.latlng
+
+                var newMarker = new L.marker(landmarkLatLng).addTo(thisView.mymap);
+                var landmarkId = ++newMarkerId
+                var tripLandmarkId = newTripId + '_' + landmarkId
+                newMarkers.push($.extend(landmarkLatLng, {tripLandmarkId: tripLandmarkId})
+                $('.landmarks').append('<li> <button class="btn btn-success" id=' + tripLandmarkId + '>' + landmarkId + '</button></li>')
+                var landmarkBtnSelector = '#' + tripLandmarkId
+                $(landmarkBtnSelector).on('click', function (e) {
+                    thisView.mymap.panTo(landmarkLatLng)
+                })
+            })
+            $('.saveTrip').on('click', function (e) {
+                var name = $('.createName').val()
+                var date = $('.createDate').val()
+                var id = newTripId
+                allTrips.push({name: name, date: date, id: id, landmarks: newMarkers})
+                window.localStorage.setItem('trips',JSON.stringify(allTrips))
+                thisView.renderTripsFromLocalStorage()
+            })
         })
         $('.deleteTrip').unbind('click').on('click', function (e) {
             thisView.deleteTripFromLocalStorage(e.currentTarget.id)
             thisView.renderTripsFromLocalStorage()
         })
 
-        $('.saveTrip').unbind('click').on('click', function (e) {
-
-        })
 
     }
 
