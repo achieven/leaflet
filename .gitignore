@@ -1,1 +1,8 @@
 .idea
+node_modules/
+app/main.js
+app/main.js.map
+app/tripTable.js
+app/tripTable.js.map
+typings
+npm-debug.log
