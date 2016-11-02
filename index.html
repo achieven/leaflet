@@ -1,10 +1,7 @@
 <html>
 <head>
-    <title>Getting Started with Angular 2</title>
+    <title>simplex</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- 1. Load libraries -->
-    <!-- IE required polyfills, in this exact order -->
     <script src="node_modules/es6-shim/es6-shim.min.js"></script>
     <script src="node_modules/systemjs/dist/system-polyfills.js"></script>
     <script src="node_modules/angular2/es6/dev/src/testing/shims_for_IE.js"></script>
@@ -23,11 +20,15 @@
     <!-- 2. Configure SystemJS -->
     <script>
         System.config({
+            map: {
+                rxjs: 'node_modules/rxjs' // added this map section
+            },
             packages: {
                 app: {
                     format: 'register',
                     defaultExtension: 'js'
-                }
+                },
+                rxjs: {defaultExtension: 'js'}
             }
         });
         System.import('app/main')
