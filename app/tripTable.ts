@@ -5,9 +5,10 @@ import {Component} from 'angular2/core';
 })
 export class AppComponent {
     mymap;
+
     constructor() {
         var allTrips = window.localStorage.getItem('trips')
-        if(!allTrips || allTrips.length < 1) {
+        if (!allTrips || allTrips.length < 1) {
             window.localStorage.setItem('trips', JSON.stringify([]))
         }
     }
@@ -36,10 +37,11 @@ export class AppComponent {
     }
 
     destroyMap() {
-        this.mymap.remove()
+        this.mymap && this.mymap.remove()
         $('#mapid').empty()
         $('.landmarks').empty()
     }
+
     initializeEmptyMap() {
         var initialLatLng = [51.505, -0.09]
         this.mymap = L.map('mapid').setView([51.505, -0.09], 13);
@@ -52,121 +54,123 @@ export class AppComponent {
         }).addTo(this.mymap);
         this.mymap.panTo(initialLatLng)
     }
-    
-    showTripProperties(thisTrip){
+
+    showTripProperties(thisTrip, newTripOrEdit) {
         var thisView = this
         var tripLandmarks = thisTrip.landmarks
-        tripLandmarks.forEach(function(landmark){
-            var tripLandmarkId = landmark.tripLandmarkId
-            var landmarkId = tripLandmarkId.substr(tripLandmarkId.indexOf('_')+1)
+        tripLandmarks.forEach(function (landmark) {
+            var fullLandmarkId = landmark.fullLandmarkId
+            var tripsLandmarkId = fullLandmarkId.substr(fullLandmarkId.indexOf('_') + 1)
 
             L.marker({lat: landmark.lat, lng: landmark.lng}).addTo(thisView.mymap);
-            $('.landmarks').append('<li liId=' + tripLandmarkId + '> <button class="btn btn-success landmarkBtn" id=' + tripLandmarkId + ' lat=' + landmark.lat + ' lng=' + landmark.lng + '>' + landmarkId + '</button> <button class="glyphicon glyphicon-trash" id=' + tripLandmarkId  + ' lat=' + landmark.lat + ' lng=' + landmark.lng + '> </button></li>')
+            $('.landmarks').append('<li liId=' + fullLandmarkId + '> <button class="btn btn-success landmarkBtn"' + ' lat=' + landmark.lat + ' lng=' + landmark.lng + '>' + tripsLandmarkId + '</button> <button class="glyphicon glyphicon-trash" id=' + fullLandmarkId + ' lat=' + landmark.lat + ' lng=' + landmark.lng + '> </button></li>')
             $('.landmarkBtn').unbind('click').on('click', function (e) {
-                thisView.mymap.panTo({lat: e.currentTarget.getAttribute('lat'), lng: e.currentTarget.getAttribute('lng')})
-            })
-            $('.glyphicon-trash').unbind('click').on('click', function (e) {
-                var landmarkToRemoveIndex = tripLandmarks.findIndex(function(landmark){
-                    return landmark.tripLandmarkId == e.currentTarget.id
+                thisView.mymap.panTo({
+                    lat: e.currentTarget.getAttribute('lat'),
+                    lng: e.currentTarget.getAttribute('lng')
                 })
-                tripLandmarks.splice(landmarkToRemoveIndex, 1)
-                var liToRemoveSelector = '[liId=' + e.currentTarget.id + ']'
-                $(liToRemoveSelector).remove()
-                thisView.destroyMap()
-                thisView.initializeEmptyMap()
-                thisView.showTripProperties(thisTrip)
-
             })
         })
-        setTimeout(function(){
+        $('.glyphicon-trash').unbind('click').on('click', function (e) {
+            var landmarkToRemoveIndex = tripLandmarks.findIndex(function (landmark) {
+                return landmark.fullLandmarkId == e.currentTarget.id
+            })
+            tripLandmarks.splice(landmarkToRemoveIndex, 1)
+            var liToRemoveSelector = '[liId=' + e.currentTarget.id + ']'
+            $(liToRemoveSelector).remove()
+            thisView.destroyMap()
+            thisView.initializeEmptyMap()
+            thisView.editModal(thisTrip, newTripOrEdit)
+        })
+        setTimeout(function () {
             $('.createName').val(thisTrip.name)
             $('.createDate').val(thisTrip.date)
-        },500)
-        
+        }, 500)
     }
-    
-    editModal(allTrips,oldMarkers, lastMarkerId, tripId, tripIndex, newTripOrEdit){
+
+
+    editModal(thisTrip, newTripOrEdit) {
         var thisView = this
+        thisView.destroyMap()
+        thisView.initializeEmptyMap()
+        thisView.showTripProperties(thisTrip, newTripOrEdit)
+
+
         var newMarkers = []
-        
+
         thisView.mymap.on('click', function (e) {
-            var landmarkLatLng = e.latlng
-            var newMarker = L.marker(landmarkLatLng).addTo(thisView.mymap);
-            var landmarkId = ++lastMarkerId
-            var tripLandmarkId = tripId + '_' + landmarkId
-            newMarkers.push($.extend(landmarkLatLng, {tripLandmarkId: tripLandmarkId}))
-            $('.landmarks').append('<li> <button class="btn btn-success landmarkBtn" id=' + tripLandmarkId + ' lat=' + landmarkLatLng.lat + ' lng=' + landmarkLatLng.lng + '>' + landmarkId + '</button> <button class="glyphicon glyphicon-trash"></button></li>')
-            $('.landmarkBtn').unbind('click').on('click', function (e) {
-                thisView.mymap.panTo({lat: e.currentTarget.getAttribute('lat'), lng: e.currentTarget.getAttribute('lng')})
-            })
-            $('.glyphicon-trash').unbind('click').on('click', function (e) {
-                debugger
-            })
+            var tripsLastLandmarkId
+            if (thisTrip.landmarks.length === 0) {
+                tripsLastLandmarkId = 0
+            }
+            else {
+                var lastLandmark = thisTrip.landmarks[thisTrip.landmarks.length - 1]
+                tripsLastLandmarkId = parseInt(lastLandmark.fullLandmarkId.substr(lastLandmark.fullLandmarkId.indexOf('_') + 1))
+            }
+            var landmark = e.latlng
+            var newLandmark = L.marker(landmark)
+            var currentTripsLandmarkId = ++tripsLastLandmarkId
+            var fullLandmarkId = thisTrip.id + '_' + currentTripsLandmarkId
+            thisTrip.landmarks.push($.extend(landmark, {fullLandmarkId: fullLandmarkId}))
+            thisView.destroyMap()
+            thisView.initializeEmptyMap()
+            thisView.editModal(thisTrip, newTripOrEdit)
         })
         $('.saveTrip').unbind('click').on('click', function (e) {
             e.preventDefault()
             var name = $('.createName').val()
             var date = $('.createDate').val()
-            var id = tripId
-            var newTripContents = {name: name, date: date, id: id, landmarks: oldMarkers.concat(newMarkers)}
-            console.log(newTripOrEdit, newTripContents)
-            if(newTripOrEdit === 'new'){
+            var id = thisTrip.id
+            var newTripContents = {name: name, date: date, id: id, landmarks: thisTrip.landmarks}
+            var allTrips = JSON.parse(window.localStorage.getItem('trips'))
+            if (newTripOrEdit === 'new') {
                 allTrips.push(newTripContents)
             }
-            else if(newTripOrEdit === 'edit') {
+            else if (newTripOrEdit === 'edit') {
+                var tripIndex = allTrips.findIndex(function (_trip) {
+                    return _trip.id === thisTrip.id
+                })
                 allTrips[tripIndex] = newTripContents
             }
-            
+
             window.localStorage.setItem('trips', JSON.stringify(allTrips))
             thisView.renderTripsFromLocalStorage();
             (<any>$('#newTripModal')).modal('hide')
         })
     }
-    
-    
+
 
     ngAfterContentChecked() {
         var thisView = this
         $('.editTrip').unbind('click').on('click', function (e) {
             var tripId = e.currentTarget.getAttribute('id')
             var allTrips = JSON.parse(window.localStorage.getItem('trips'))
-            var tripIndex = allTrips.findIndex(function(trip){
+            var tripIndex = allTrips.findIndex(function (trip) {
                 return tripId == trip.id
             })
-            
-            if (thisView.mymap) {
-                thisView.destroyMap()
-            }
-            thisView.initializeEmptyMap()
 
             var allTrips = JSON.parse(window.localStorage.getItem('trips'))
             var thisTrip = allTrips[tripIndex]
-
-            thisView.showTripProperties(thisTrip)
-            var oldMarkers = thisTrip.landmarks
-            var lastTripLandmarkId = oldMarkers[oldMarkers.length-1].tripLandmarkId
-            var lastMarkerId = parseInt(lastTripLandmarkId.substr(lastTripLandmarkId.indexOf('_')+1))
-            thisView.editModal(allTrips, oldMarkers, lastMarkerId, thisTrip.id, tripIndex, 'edit')
+            thisView.editModal(thisTrip, 'edit')
         })
 
 
-        $('.newTripBtn').unbind('click').on('click', function (e) {
+        $('#newTripBtn').unbind('click').on('click', function (e) {
 
-            if (thisView.mymap) {
-                thisView.destroyMap()
-            }
-            thisView.initializeEmptyMap();
-            
             var allTrips = JSON.parse(window.localStorage.getItem('trips'))
-            var newTripId = allTrips.length > 0 ? allTrips[allTrips.length - 1].id+1 : 1
-            
+            var newTripId = allTrips.length > 0 ? allTrips[allTrips.length - 1].id + 1 : 1
+
             var oldMarkers = []
             var lastMarkerId = 0
-            $('.createName').val('')
-            $('.createDate').val('')
-            thisView.editModal(allTrips, oldMarkers, lastMarkerId, newTripId, undefined, 'new')
-            
-            
+            var thisTrip = {
+                name: '',
+                date: '',
+                id: newTripId,
+                landmarks: []
+            }
+            thisView.editModal(thisTrip, 'new')
+
+
         })
         $('.deleteTrip').unbind('click').on('click', function (e) {
             thisView.deleteTripFromLocalStorage(e.currentTarget.id)
