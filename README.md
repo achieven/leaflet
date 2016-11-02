@@ -1,4 +1,4 @@
-# simplex    
+# Leaflet    
 
 To run app:    
 npm i    
