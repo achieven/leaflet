@@ -17,9 +17,12 @@ export class AppComponent {
         var tripsAsArray = JSON.parse(window.localStorage.getItem('trips'))
         var tripsInTable = ''
         tripsAsArray.forEach(function (trip) {
+            var dateTd = '<td>' + trip.date + '</td>'
+            var nameTd = '<td>' + trip.name + '</td>'
+            var editCopyDeleteTd = '<td class="editAndDeleteTrip">' + '<button class="btn btn-info editTrip" data-toggle="modal" data-target="#newTripModal" id=' + trip.id + '>Edit</button> <button class="btn btn-success copyTrip" id=' + JSON.stringify(trip) + '> Copy</button><button class="btn btn-warning deleteTrip" id=' + trip.id + '>Delete</button></td>'
             var deleteWarningText = '<td class="deleteTripWarning hide" deleteId=' + trip.id + '><div class="alert alert-warning text-center" id="deleteWarningText">Are you sure you want to delete this trip? This is an irreversible step! </div></td>'
             var deleteWarningButtons = '<td class="deleteTripWarningButtons hide" deleteId=' + trip.id +'> <button class="btn btn-danger yesDeleteTrip yesButton" id=' + trip.id +' type="button">Yes </button> <button class="btn btn-info noDontDeleteTrip noButton" id=' + trip.id +' type="button">No </button></td>'
-            var tableRow = '<tr><td>' + trip.date + '</td> <td>' + trip.name + '</td> <td class="editAndDeleteTrip">' + '<button class="btn btn-info editTrip" data-toggle="modal" data-target="#newTripModal" id=' + trip.id + '>Edit</button><button class="btn btn-warning deleteTrip" id=' + trip.id + '>Delete</button></td>' + deleteWarningText + deleteWarningButtons +'</tr>'
+            var tableRow = '<tr>' +dateTd + nameTd + editCopyDeleteTd + deleteWarningText + deleteWarningButtons +'</tr>'
             tripsInTable += tableRow
         })
         $('.tripTable').html(tripsInTable)
@@ -45,7 +48,6 @@ export class AppComponent {
     }
 
     initializeEmptyMap() {
-        var initialLatLng = [51.505, -0.09]
         this.mymap = L.map('mapid').setView([51.505, -0.09], 13);
         L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpandmbXliNDBjZWd2M2x6bDk3c2ZtOTkifQ._QA7i5Mpkd_m30IGElHziw', {
             maxZoom: 18,
@@ -54,7 +56,6 @@ export class AppComponent {
             'Imagery © <a href="http://mapbox.com">Mapbox</a>',
             id: 'mapbox.streets'
         }).addTo(this.mymap);
-        this.mymap.panTo(initialLatLng)
     }
 
     showTripProperties(thisTrip, newTripOrEdit) {
@@ -85,8 +86,9 @@ export class AppComponent {
             thisView.editModal(thisTrip, newTripOrEdit)
         })
         setTimeout(function () {
+
             $('.createName').val(thisTrip.name)
-            $('.createDate').val(thisTrip.date)
+            $('.createDate').val(thisTrip.date.split('/').reverse().join('-'))
         }, 500)
     }
 
@@ -177,6 +179,18 @@ export class AppComponent {
             thisView.editModal(thisTrip, 'new')
 
 
+        })
+        $('.copyTrip').unbind('click').on('click', function (e) {
+            var allTrips = JSON.parse(window.localStorage.getItem('trips'))
+            var copiedTrip = JSON.parse(e.currentTarget.id)
+            var indexOfCurrentTrip = allTrips.indexOf(function(_trip){
+                return copiedTrip.id == _trip.id
+            })
+            var lastTripId = allTrips[allTrips.length-1].id
+            copiedTrip.id = lastTripId+1
+            allTrips.splice(indexOfCurrentTrip, 0, copiedTrip)
+            window.localStorage.setItem('trips', JSON.stringify(allTrips))
+            thisView.renderTripsFromLocalStorage()
         })
         $('.deleteTrip').unbind('click').on('click', function (e) {
             var deleteWarningSelector = '[deleteId=' + JSON.stringify(e.currentTarget.id) + ']'
