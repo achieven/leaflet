@@ -17,11 +17,10 @@
     <link rel="stylesheet" href="node_modules/leaflet/dist/leaflet.css">
     <link rel="stylesheet" href="assets/assets.css">
 
-    <!-- 2. Configure SystemJS -->
     <script>
         System.config({
             map: {
-                rxjs: 'node_modules/rxjs' // added this map section
+                rxjs: 'node_modules/rxjs'
             },
             packages: {
                 app: {
@@ -52,7 +51,7 @@
                         <form class=navbar-form>
                             <ul class="nav navbar-nav">
                                 <li><input type="text" class="form-control createName" placeholder="name"></li>
-                                <li><input type="date" class="form-control createDate" placeholder="bio"></li>
+                                <li><input type="date" class="form-control createDate" placeholder="yyyy-mm-dd"></li>
                                 <li class="form-control alert-danger error-create-trip hide"></li>
                             </ul>
                         </form>
