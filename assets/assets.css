@@ -1,8 +1,9 @@
 
-#mapid { height: 400px; width: 400px; }
+#mapid { height: 100%; width: 100%; }
 #newTripBtn {float: right; margin-top: 10px;}
 
 .editTrip {margin-right: 15px;}
+.copyTrip {margin-right: 15px;}
 
 #deleteWarningText {padding: 5px;}
 .deleteTripWarningButtons {float: right;}

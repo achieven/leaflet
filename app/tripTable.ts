@@ -17,12 +17,17 @@ export class AppComponent {
         var tripsAsArray = JSON.parse(window.localStorage.getItem('trips'))
         var tripsInTable = ''
         tripsAsArray.forEach(function (trip) {
+            var dateTd = '<td>' + trip.date + '</td>'
+            var nameTd = '<td>' + trip.name + '</td>'
+            var editCopyDeleteTd = '<td class="editAndDeleteTrip"><button class="btn btn-info editTrip" data-toggle="modal" data-target="#newTripModal" id=' + trip.id + '>Edit</button> <button class="btn btn-success copyTrip" id=' + JSON.stringify(trip) + '> Copy</button><button class="btn btn-warning deleteTrip" id=' + trip.id + '>Delete</button></td>'
+            var copyMessageTd = '<td class="copyMessage hide" copyMessageId=' + trip.id + '>Copied trip is placed just underneath this one</td>'
             var deleteWarningText = '<td class="deleteTripWarning hide" deleteId=' + trip.id + '><div class="alert alert-warning text-center" id="deleteWarningText">Are you sure you want to delete this trip? This is an irreversible step! </div></td>'
-            var deleteWarningButtons = '<td class="deleteTripWarningButtons hide" deleteId=' + trip.id +'> <button class="btn btn-danger yesDeleteTrip yesButton" id=' + trip.id +' type="button">Yes </button> <button class="btn btn-info noDontDeleteTrip noButton" id=' + trip.id +' type="button">No </button></td>'
-            var tableRow = '<tr><td>' + trip.date + '</td> <td>' + trip.name + '</td> <td class="editAndDeleteTrip">' + '<button class="btn btn-info editTrip" data-toggle="modal" data-target="#newTripModal" id=' + trip.id + '>Edit</button><button class="btn btn-warning deleteTrip" id=' + trip.id + '>Delete</button></td>' + deleteWarningText + deleteWarningButtons +'</tr>'
+            var deleteWarningButtons = '<td class="deleteTripWarningButtons hide" deleteId=' + trip.id + '> <button class="btn btn-danger yesDeleteTrip yesButton" id=' + trip.id + ' type="button">Yes </button> <button class="btn btn-info noDontDeleteTrip noButton" id=' + trip.id + ' type="button">No </button></td>'
+            var tableRow = '<tr>' + dateTd + nameTd + editCopyDeleteTd + copyMessageTd + deleteWarningText + deleteWarningButtons + '</tr>'
             tripsInTable += tableRow
         })
         $('.tripTable').html(tripsInTable)
+        this.listenToTripButtons()
     }
 
     deleteTripFromLocalStorage(id) {
@@ -35,7 +40,23 @@ export class AppComponent {
     }
 
     ngAfterContentInit() {
+        var thisView = this
         this.renderTripsFromLocalStorage()
+        $('#newTripBtn').unbind('click').on('click', function (e) {
+            var allTrips = JSON.parse(window.localStorage.getItem('trips'))
+            var lastTripId = Math.max.apply(null, allTrips.map(function (_trip) {
+                return _trip.id
+            }))
+            var newTripId = allTrips.length > 0 ? lastTripId + 1 : 1
+            console.log(newTripId)
+            var thisTrip = {
+                name: '',
+                date: '',
+                id: newTripId,
+                landmarks: []
+            }
+            thisView.editModal(thisTrip, 'new')
+        })
     }
 
     destroyMap() {
@@ -45,7 +66,6 @@ export class AppComponent {
     }
 
     initializeEmptyMap() {
-        var initialLatLng = [51.505, -0.09]
         this.mymap = L.map('mapid').setView([51.505, -0.09], 13);
         L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpandmbXliNDBjZWd2M2x6bDk3c2ZtOTkifQ._QA7i5Mpkd_m30IGElHziw', {
             maxZoom: 18,
@@ -54,7 +74,6 @@ export class AppComponent {
             'Imagery © <a href="http://mapbox.com">Mapbox</a>',
             id: 'mapbox.streets'
         }).addTo(this.mymap);
-        this.mymap.panTo(initialLatLng)
     }
 
     showTripProperties(thisTrip, newTripOrEdit) {
@@ -85,8 +104,9 @@ export class AppComponent {
             thisView.editModal(thisTrip, newTripOrEdit)
         })
         setTimeout(function () {
+
             $('.createName').val(thisTrip.name)
-            $('.createDate').val(thisTrip.date)
+            $('.createDate').val(thisTrip.date.split('/').reverse().join('-'))
         }, 500)
     }
 
@@ -123,8 +143,8 @@ export class AppComponent {
             var name = $('.createName').val()
             var dateToReverse = $('.createDate').val()
             var date = dateToReverse.split('-').reverse().join('/')
-            
-            if(thisView.validateTripProperties(name, date)){
+
+            if (thisView.validateTripProperties(name, date)) {
                 var id = thisTrip.id
                 var newTripContents = {name: name, date: date, id: id, landmarks: thisTrip.landmarks}
                 var allTrips = JSON.parse(window.localStorage.getItem('trips'))
@@ -146,7 +166,7 @@ export class AppComponent {
     }
 
 
-    ngAfterContentChecked() {
+    listenToTripButtons() {
         var thisView = this
         $('.editTrip').unbind('click').on('click', function (e) {
             var tripId = e.currentTarget.getAttribute('id')
@@ -159,22 +179,27 @@ export class AppComponent {
             var thisTrip = allTrips[tripIndex]
             thisView.editModal(thisTrip, 'edit')
         })
-
-
-        $('#newTripBtn').unbind('click').on('click', function (e) {
-
+        $('.copyTrip').unbind('click').on('click', function (e) {
             var allTrips = JSON.parse(window.localStorage.getItem('trips'))
-            var newTripId = allTrips.length > 0 ? allTrips[allTrips.length - 1].id + 1 : 1
+            var copiedTrip = JSON.parse(e.currentTarget.id)
+            var copyMessageSelector = '[copyMessageId=' + JSON.stringify(copiedTrip.id) + ']'
+            
 
-            var oldMarkers = []
-            var lastMarkerId = 0
-            var thisTrip = {
-                name: '',
-                date: '',
-                id: newTripId,
-                landmarks: []
-            }
-            thisView.editModal(thisTrip, 'new')
+            var indexOfCurrentTrip = allTrips.findIndex(function (_trip) {
+                return copiedTrip.id == _trip.id
+            })
+            var lastTripId = Math.max.apply(null, allTrips.map(function (_trip) {
+                return _trip.id
+            }))
+            copiedTrip.id = lastTripId + 1
+            allTrips.splice(indexOfCurrentTrip + 1, 0, copiedTrip)
+            window.localStorage.setItem('trips', JSON.stringify(allTrips))
+            thisView.renderTripsFromLocalStorage()
+            $(copyMessageSelector).removeClass('hide')
+            setTimeout(function () {
+                
+                $(copyMessageSelector).addClass('hide')
+            }, 5000)
 
 
         })
@@ -194,15 +219,15 @@ export class AppComponent {
         })
     }
 
-    validateTripProperties(name, date){
+    validateTripProperties(name, date) {
         var dateRegex = /^(((0[1-9]|[12]\d|3[01])\/(0[13578]|1[02])\/((19|[2-9]\d)\d{2}))|((0[1-9]|[12]\d|30)\/(0[13456789]|1[012])\/((19|[2-9]\d)\d{2}))|((0[1-9]|1\d|2[0-8])\/02\/((19|[2-9]\d)\d{2}))|(29\/02\/((1[6-9]|[2-9]\d)(0[48]|[2468][048]|[13579][26])|((16|[2468][048]|[3579][26])00))))$/g;
         var dateValid = dateRegex.test(date)
 
-        if(!dateValid){
+        if (!dateValid) {
             $('.error-create-trip').removeClass('hide')
             $('.error-create-trip').text('date is not valid!')
         }
-        else if(!name){
+        else if (!name) {
             $('.error-create-trip').removeClass('hide')
             $('.error-create-trip').text('must fill name!')
         }
