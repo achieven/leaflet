@@ -134,8 +134,6 @@ export class AppComponent {
             var currentTripsLandmarkId = ++tripsLastLandmarkId
             var fullLandmarkId = thisTrip.id + '_' + currentTripsLandmarkId
             thisTrip.landmarks.push($.extend(landmark, {fullLandmarkId: fullLandmarkId}))
-            thisView.destroyMap()
-            thisView.initializeEmptyMap()
             thisView.editModal(thisTrip, newTripOrEdit)
         })
         $('.saveTrip').unbind('click').on('click', function (e) {
