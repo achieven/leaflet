@@ -133,6 +133,8 @@ export class AppComponent {
             var newLandmark = L.marker(landmark)
             var currentTripsLandmarkId = ++tripsLastLandmarkId
             var fullLandmarkId = thisTrip.id + '_' + currentTripsLandmarkId
+            thisTrip.name = $('.createName').val()
+            thisTrip.date = $('.createDate').val()
             thisTrip.landmarks.push($.extend(landmark, {fullLandmarkId: fullLandmarkId}))
             thisView.editModal(thisTrip, newTripOrEdit)
         })
