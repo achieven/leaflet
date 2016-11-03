@@ -19,16 +19,16 @@
     "leaflet": "^1.0.1",
     "reflect-metadata": "0.1.2",
     "rxjs": "^5.0.0-beta.6",
+    "selenium-webdriver": "^3.0.0-beta-3",
     "systemjs": "0.19.26",
     "zone.js": "^0.6.10"
   },
   "devDependencies": {
     "@types/jquery": "^2.0.33",
     "@types/leaflet": "^1.0.36",
-    "chai": "^3.5.0",
     "concurrently": "^2.0.0",
+    "geckodriver": "^1.2.0",
     "lite-server": "^2.2.0",
-    "mocha": "^3.1.2",
     "typescript": "^2.0.0",
     "typings": "^0.7.12"
   }
