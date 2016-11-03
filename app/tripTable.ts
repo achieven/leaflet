@@ -19,7 +19,7 @@ export class AppComponent {
         tripsAsArray.forEach(function (trip) {
             var dateTd = '<td>' + trip.date + '</td>'
             var nameTd = '<td>' + trip.name + '</td>'
-            var editCopyDeleteTd = '<td class="editAndDeleteTrip"><button class="btn btn-info editTrip" data-toggle="modal" data-target="#newTripModal" id=' + trip.id + '>Edit</button> <button class="btn btn-success copyTrip" id=' + JSON.stringify(trip) + '> Copy</button><button class="btn btn-warning deleteTrip" id=' + trip.id + '>Delete</button></td>'
+            var editCopyDeleteTd = '<td class="editAndDeleteTrip"><button class="btn btn-info editTrip" data-toggle="modal" data-target="#newTripModal" id=' + trip.id + '>Edit</button> <button class="btn btn-success copyTrip" id=' + trip.id+ '> Copy</button><button class="btn btn-warning deleteTrip" id=' + trip.id + '>Delete</button></td>'
             var copyMessageTd = '<td class="copyMessage hide" copyMessageId=' + trip.id + '>Copied trip is placed just underneath this one</td>'
             var deleteWarningText = '<td class="deleteTripWarning hide" deleteId=' + trip.id + '><div class="alert alert-warning text-center" id="deleteWarningText">Are you sure you want to delete this trip? This is an irreversible step! </div></td>'
             var deleteWarningButtons = '<td class="deleteTripWarningButtons hide" deleteId=' + trip.id + '> <button class="btn btn-danger yesDeleteTrip yesButton" id=' + trip.id + ' type="button">Yes </button> <button class="btn btn-info noDontDeleteTrip noButton" id=' + trip.id + ' type="button">No </button></td>'
@@ -104,7 +104,6 @@ export class AppComponent {
             thisView.editModal(thisTrip, newTripOrEdit)
         })
         setTimeout(function () {
-
             $('.createName').val(thisTrip.name)
             $('.createDate').val(thisTrip.date.split('/').reverse().join('-'))
         }, 500)
@@ -133,9 +132,9 @@ export class AppComponent {
             var newLandmark = L.marker(landmark)
             var currentTripsLandmarkId = ++tripsLastLandmarkId
             var fullLandmarkId = thisTrip.id + '_' + currentTripsLandmarkId
+            thisTrip.name = $('.createName').val()
+            thisTrip.date = $('.createDate').val()
             thisTrip.landmarks.push($.extend(landmark, {fullLandmarkId: fullLandmarkId}))
-            thisView.destroyMap()
-            thisView.initializeEmptyMap()
             thisView.editModal(thisTrip, newTripOrEdit)
         })
         $('.saveTrip').unbind('click').on('click', function (e) {
@@ -180,24 +179,21 @@ export class AppComponent {
             thisView.editModal(thisTrip, 'edit')
         })
         $('.copyTrip').unbind('click').on('click', function (e) {
+            var copyMessageSelector = '[copyMessageId=' + JSON.stringify(e.currentTarget.id) + ']'
             var allTrips = JSON.parse(window.localStorage.getItem('trips'))
-            var copiedTrip = JSON.parse(e.currentTarget.id)
-            var copyMessageSelector = '[copyMessageId=' + JSON.stringify(copiedTrip.id) + ']'
-            
-
             var indexOfCurrentTrip = allTrips.findIndex(function (_trip) {
-                return copiedTrip.id == _trip.id
+                return e.currentTarget.id == _trip.id
             })
             var lastTripId = Math.max.apply(null, allTrips.map(function (_trip) {
                 return _trip.id
             }))
-            copiedTrip.id = lastTripId + 1
+            var copiedTrip = $.extend({}, allTrips[indexOfCurrentTrip],{id: lastTripId + 1})
+
             allTrips.splice(indexOfCurrentTrip + 1, 0, copiedTrip)
             window.localStorage.setItem('trips', JSON.stringify(allTrips))
             thisView.renderTripsFromLocalStorage()
             $(copyMessageSelector).removeClass('hide')
             setTimeout(function () {
-                
                 $(copyMessageSelector).addClass('hide')
             }, 5000)
 
@@ -206,17 +202,18 @@ export class AppComponent {
         $('.deleteTrip').unbind('click').on('click', function (e) {
             var deleteWarningSelector = '[deleteId=' + JSON.stringify(e.currentTarget.id) + ']'
             $(deleteWarningSelector).removeClass('hide')
+            $('.yesDeleteTrip').unbind('click').on('click', function (e) {
+                thisView.deleteTripFromLocalStorage(e.currentTarget.id)
+                thisView.renderTripsFromLocalStorage()
+                var deleteWarningSelector = '[deleteId=' + JSON.stringify(e.currentTarget.id) + ']'
+                $('.deleteWarningSelector').addClass('hide')
+            })
+            $('.noDontDeleteTrip').unbind('click').on('click', function (e) {
+                var deleteWarningSelector = '[deleteId=' + JSON.stringify(e.currentTarget.id) + ']'
+                $(deleteWarningSelector).addClass('hide')
+            })
         })
-        $('.yesDeleteTrip').unbind('click').on('click', function (e) {
-            thisView.deleteTripFromLocalStorage(e.currentTarget.id)
-            thisView.renderTripsFromLocalStorage()
-            var deleteWarningSelector = '[deleteId=' + JSON.stringify(e.currentTarget.id) + ']'
-            $('.deleteWarningSelector').addClass('hide')
-        })
-        $('.noDontDeleteTrip').unbind('click').on('click', function (e) {
-            var deleteWarningSelector = '[deleteId=' + JSON.stringify(e.currentTarget.id) + ']'
-            $(deleteWarningSelector).addClass('hide')
-        })
+        
     }
 
     validateTripProperties(name, date) {
